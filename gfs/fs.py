@@ -51,25 +51,10 @@ class GFolder:
         '''
         assert False
 
-    def Create(self, name="", LocalPath="", isFolder=False):
-        '''
-        Create file/folder under this folder
-
-        :Args:
-            - name: str, name of created file/folder
-            - LocalPath: str, if upload from local file
-            - isFolder: boolean, True if folder created else file created
-
-        :Returns:
-            - GFolder object or GFile object
-        '''
-        name = name or (os.path.split(LocalPath)[1] if LocalPath else "")
-        assert name, "Create without filename"
-
-        folder_id = self.__idPath[-1]
+    def __prepareHttpArgs(self, name, isFolder, LocalPath=""):
         metadata = {
           'name' : name,
-          'parents': [folder_id]
+          'parents': [self.__idPath[-1]]
         }
         http_args = {
             'body': metadata,
@@ -77,11 +62,43 @@ class GFolder:
         }
         if isFolder:
             metadata['mimeType'] = 'application/vnd.google-apps.folder'
-        if LocalPath and not isFolder:
-            # try read LocalPath
+        if LocalPath:
             assert os.path.exists(LocalPath) and os.path.isfile(LocalPath)
             http_args['media_body'] = MediaFileUpload(LocalPath, resumable=True)
+        return http_args
 
+    def Upload(self, LocalPath, name="", progressCallback=None):
+        '''
+        Upload file to GFolder
+
+        :Args:
+            - LocalPath: str, path to upload file on local file system
+            - name: str, upload name
+            - progressCallback: callable, call with upload progress(percent) argument
+        '''
+        name = name or (os.path.split(LocalPath)[1] if LocalPath else "")
+
+        http_args = self.__prepareHttpArgs(name, False, LocalPath)
+        request = self.__ds.files().create(**http_args)
+
+        response = None
+        while response is None:
+            status, response = request.next_chunk()
+            if progressCallback and status:
+                progressCallback(status.progress()*100)
+
+    def Create(self, name, isFolder=False):
+        '''
+        Create file/folder under this folder
+
+        :Args:
+            - name: str, name of created file/folder
+            - isFolder: boolean, True if folder created else file created
+
+        :Returns:
+            - GFolder object or GFile object
+        '''
+        http_args = self.__prepareHttpArgs(name, isFolder)
         response = self.__ds.files().create(**http_args).execute()
         fid = response.get('id')
         if isFolder:
