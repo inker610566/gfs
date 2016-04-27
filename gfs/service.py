@@ -7,12 +7,6 @@ from oauth2client import client
 from oauth2client import tools
 from apiclient.http import MediaFileUpload
 
-try:
-    import argparse
-    flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
-except ImportError:
-    flags = None
-
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/drive-python-quickstart.json
 SCOPES = 'https://www.googleapis.com/auth/drive'
@@ -39,10 +33,7 @@ def get_credentials(CLIENT_SECRET_FILE="", APPLICATION_NAME = 'Drive API Python 
         assert CLIENT_SECRET_FILE
         flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
         flow.user_agent = APPLICATION_NAME
-        if flags:
-            credentials = tools.run_flow(flow, store, flags)
-        else: # Needed only for compatibility with Python 2.6
-            credentials = tools.run(flow, store)
+        credentials = tools.run(flow, store)
         print('Storing credentials to ' + credential_path)
     return credentials
 
