@@ -35,17 +35,14 @@ class GFolder:
     def __openFromPidName(self, pid, name):
         '''
         :Returns:
-            - pid
+            - folder id if exist else None
         '''
         response = self.__ds.files().list(
             q="'%s' in parents and name = '%s' and mimeType='application/vnd.google-apps.folder'"%(pid, name),
             fields="files(id)"
         ).execute()
-        f = response.get('files', [None])[0]
-        if f:
-            return f.get('id')
-        else:
-            return None
+        f = (response.get('files') or [None])[0]
+        return f and f.get('id')
 
     def List(self):
         '''
@@ -95,10 +92,12 @@ class GFolder:
     def Open(self, folderName):
         '''
         Get GFolder object under current folder
+        
+        :Returns:
+            - GFolder if exists else None
         '''
         fid = self.__openFromPidName(self.__idPath[-1], folderName)
-        assert fid is not None
-        return GFolder(self.__ds, idpath=self.__idPath+[fid])
+        return fid and GFolder(self.__ds, idpath=self.__idPath+[fid])
 
     def Download(self, filename, LocalPath=None):
         '''
