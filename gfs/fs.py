@@ -142,9 +142,15 @@ class GFolder:
         fid = self.__openFromPidName(self.__idPath[-1], folderName)
         return fid and GFolder(self.__ds, idpath=self.__idPath+[fid])
 
-    def Download(self, filename, LocalPath=None):
+    def OpenFiles(self, filename):
         '''
-        Download file from google drive
+        :Returns:
+            - a list of file under self folder with filename
         '''
-        LocalPath = LocalPath or filename
-        assert False
+        response = self.__ds.files().list(
+            q="'%s' in parents and name = '%s' and mimeType!='application/vnd.google-apps.folder'"%(self.__idPath[-1], filename),
+            fields="files(id, modifiedTime)"
+        ).execute()
+        fs = response.get('files')
+        return [GFile(self.__ds, f.get('id'), filename, f.get('modifiedTime')) for f in fs]
+
