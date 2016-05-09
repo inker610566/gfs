@@ -1,5 +1,6 @@
 import os
-from apiclient.http import MediaFileUpload
+import io
+from apiclient.http import MediaFileUpload, MediaIoBaseDownload
 
 class GFile:
     '''
@@ -14,6 +15,17 @@ class GFile:
         self.__id = file_id
         self.name = name
         self.modifiedTime = modifiedTime
+
+    def Download(self, LocalPath="", progressCallback=None):
+        LocalPath = LocalPath or self.name
+        request = self.__ds.files().get_media(fileId=self.__id)
+        #fh = io.BytesIO()
+        fh = io.open(LocalPath, "wb")
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while done is False:
+            status, done = downloader.next_chunk()
+            progressCallback(status.progress() * 100)
 
 
 class GFolder:
