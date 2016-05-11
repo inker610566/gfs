@@ -48,9 +48,9 @@ class GFolder:
         self.__ds = driveService
         if idpath is None:
             idpath = ['root']
-            for f in fullpath:
+            for idx, f in enumerate(fullpath):
                 fid = self.__openFromPidName(idpath[-1], f)
-                assert fid is not None
+                assert fid is not None, "%s folder is not found under %s" %(f, "/".join(fullpath[:idx]))
                 idpath += [fid]
         self.__idPath= idpath
 
