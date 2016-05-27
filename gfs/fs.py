@@ -1,6 +1,10 @@
 import os
 import io
+import time
 from apiclient.http import MediaFileUpload, MediaIoBaseDownload
+from googleapiclient.errors import HttpError
+
+MAX_RETRY_TIMES = 8
 
 class GFile:
     '''
@@ -119,9 +123,22 @@ class GFolder:
         http_args = self.__prepareHttpArgs(name, False, LocalPath)
         request = self.__ds.files().create(**http_args)
 
+        retry_times = 0
         response = None
         while response is None:
-            status, response = request.next_chunk()
+            try
+                status, response = request.next_chunk()
+                retry_times = 0
+            except HttpError as e:
+                if e.message.find('Service Unavailable') != -1:
+                    if retry_times > MAX_RETRY_TIMES:
+                        raise e
+                    st = 5*(2**retry_times)
+                    print >>sys.stderr, 'Service Unavailable wait %d seconds'%st
+                    time.sleep(st)
+                    retry_times += 1
+                else:
+                    raise e
             if progressCallback and status:
                 progressCallback(status.progress()*100)
 
