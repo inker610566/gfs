@@ -49,6 +49,7 @@ class GFolder:
         if idpath is None:
             idpath = ['root']
             for idx, f in enumerate(fullpath):
+                f = f.decode('utf-8')
                 fid = self.__openFromPidName(idpath[-1], f)
                 assert fid is not None, "%s folder is not found under %s" %(f, "/".join(fullpath[:idx]))
                 idpath += [fid]
