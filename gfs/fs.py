@@ -127,11 +127,11 @@ class GFolder:
         retry_times = 0
         response = None
         while response is None:
-            try
+            try:
                 status, response = request.next_chunk()
                 retry_times = 0
             except HttpError as e:
-                if e.message.find('Service Unavailable') != -1:
+                if str(e).find('Service Unavailable') != -1:
                     if retry_times > MAX_RETRY_TIMES:
                         raise e
                     st = 5*(2**retry_times)
