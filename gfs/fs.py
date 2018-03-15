@@ -24,12 +24,13 @@ class GFile:
         LocalPath = LocalPath or self.name
         request = self.__ds.files().get_media(fileId=self.__id)
         #fh = io.BytesIO()
-        fh = io.open(LocalPath, "wb")
-        downloader = MediaIoBaseDownload(fh, request)
-        done = False
-        while done is False:
-            status, done = downloader.next_chunk()
-            progressCallback(status.progress() * 100)
+        with io.open(LocalPath, "wb") as fh:
+            downloader = MediaIoBaseDownload(fh, request)
+            done = False
+            while done is False:
+                status, done = downloader.next_chunk()
+                if progressCallback:
+                    progressCallback(status.progress() * 100)
 
 
 class GFolder:
